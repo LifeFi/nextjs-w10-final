@@ -36,7 +36,7 @@ export default () => {
   const { user } = useUser();
 
   // 폼 작성
-  const { register, handleSubmit } = useForm<TweetForm>();
+  const { register, handleSubmit, reset } = useForm<TweetForm>();
 
   // 트윗 뮤테이션 작성
   const [tweetMutation, { loading, data }] =
@@ -56,6 +56,7 @@ export default () => {
 
   useEffect(() => {
     if (!loading && data?.ok) {
+      reset();
       tweetsDataMutate();
     }
   }, [data]);
@@ -83,7 +84,7 @@ export default () => {
             <div className="w-full flex justify-center items-center h-16">
               <input
                 type="submit"
-                value="트윗하기"
+                value={loading ? "트윗중..." : "트윗하기"}
                 className={cls(
                   "w-28 h-8 rounded-full text-sm font-semibold",
                   user

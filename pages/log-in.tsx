@@ -94,8 +94,8 @@ const LogIn: NextPage = () => {
 
           <input
             type="submit"
-            value="로그인"
             className="border-2 rounded-full w-80 h-9 bg-black text-white text-sm my-3 cursor-pointer"
+            value={loading ? "로그인중..." : "로그인"}
           />
         </form>
       </div>

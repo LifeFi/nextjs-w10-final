@@ -103,7 +103,7 @@ const CreateAccount: NextPage = () => {
           />
           <input
             type="submit"
-            value="계정 생성"
+            value={loading ? "계정 생성중..." : "계정 생성"}
             className="border-2 rounded-full w-80 h-9 bg-black text-white text-sm my-3 cursor-pointer"
           />
         </form>
