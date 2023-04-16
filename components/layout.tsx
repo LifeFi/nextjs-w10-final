@@ -31,7 +31,7 @@ export default function Layout({
   useEffect(() => {
     if (data?.ok) {
       mutate("/api/users/me");
-      router.push("/log-in");
+      router.push("/");
     }
   }, [data]);
 
