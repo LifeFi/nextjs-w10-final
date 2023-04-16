@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
-import withHandler, { ResponseType } from "../../../lib/withHandler";
-import { withApiSession } from "../../../lib/withSession";
+import withHandler, { ResponseType } from "../../../libs/withHandler";
+import { withApiSession } from "../../../libs/withSession";
 
 async function handler(
   req: NextApiRequest,

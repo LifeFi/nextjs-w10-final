@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 
-const PUBLIC = ["/log-in", "/create-account"];
+const PUBLIC = ["/log-in", "/create-account", "/"];
 
 interface ProfileResponse {
   ok: boolean;

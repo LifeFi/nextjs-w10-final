@@ -1,10 +1,10 @@
 import { NextPage } from "next";
-import Link from "next/link";
-import { cls } from "../lib/util";
 import { useRouter } from "next/router";
 import { useForm } from "react-hook-form";
-import useMutation from "../lib/useMutation";
+import useMutation from "@libs/useMutation";
 import { useEffect } from "react";
+import Layout from "@components/layout";
+import { useSWRConfig } from "swr";
 
 interface LogInForm {
   username: string;
@@ -18,16 +18,16 @@ interface LogInMutationsResult {
 
 const LogIn: NextPage = () => {
   const router = useRouter();
-  const [logout] = useMutation("/api/users/logout");
+  const { mutate } = useSWRConfig();
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
-    watch,
-  } = useForm<LogInForm>();
+  } = useForm<LogInForm>({ mode: "onChange" });
 
-  const [enter, { loading, data, error }] =
+  const [enter, { loading, data }] =
     useMutation<LogInMutationsResult>("/api/users/enter");
 
   const onValid = ({ username, password }: LogInForm) => {
@@ -39,70 +39,67 @@ const LogIn: NextPage = () => {
     if (!loading) {
       console.log(data);
       if (data?.ok) {
+        mutate("/api/users/me");
         router.push("/");
+      } else if (data?.error === "Invalid username") {
+        setError(
+          "username",
+          {
+            type: "custom",
+            message: "아이디를 확인해 주세요.",
+          },
+          { shouldFocus: true }
+        );
+      } else if (data?.error === "Invalid password") {
+        setError(
+          "password",
+          {
+            type: "custom",
+            message: "비밀번호를 확인해 주세요.",
+          },
+          { shouldFocus: true }
+        );
       }
     }
   }, [data]);
 
   return (
-    <div>
-      <h1>Log-In</h1>
-      <div className="flex">
-        <div
-          className={cls(
-            router.pathname === "/log-in" ? "text-blue-500 font-bold" : ""
-          )}
+    <Layout title="로그인" hasLeftSideTabBar canGoBack>
+      <div className="w-full flex justify-center">
+        <form
+          onSubmit={handleSubmit(onValid)}
+          className="flex flex-col w-80 text-sm"
         >
-          <Link href="/log-in">Log-In</Link>
-        </div>
-        <div
-          className={cls(
-            router.pathname === "/create-account"
-              ? "text-blue-500 font-bold"
-              : ""
-          )}
-        >
-          <Link href="/create-account">Create-Account</Link>
-        </div>
-        <div
-          className={cls(
-            router.pathname === "/" ? "text-blue-500 font-bold" : ""
-          )}
-        >
-          <Link href="/">Home</Link>
-        </div>
-        <button
-          onClick={() => {
-            logout({});
-            console.log("Log-Out!");
-            router.push("/log-in");
-          }}
-          type="button"
-        >
-          Log-Out
-        </button>
-      </div>
-      <form onSubmit={handleSubmit(onValid)} className="flex flex-col w-60">
-        <input
-          {...register("username", { required: true })}
-          required
-          name="username"
-          type="text"
-          className="w-60 bg-slate-200"
-          placeholder="username"
-        />
-        <input
-          {...register("password", { required: true })}
-          required
-          name="password"
-          type="password"
-          className="w-60 bg-slate-200"
-          placeholder="password"
-        />
+          <input
+            {...register("username", { required: true })}
+            required
+            name="username"
+            type="text"
+            className="h-9 w-80 pl-1 my-2 border-[1px] rounded-sm focus:ring-2 appearance-none   focus:border-blue-400 focus:outline-none"
+            placeholder="아이디"
+          />
+          <input
+            {...register("password", { required: true })}
+            required
+            name="password"
+            type="password"
+            className="h-9 w-80 pl-1 my-2 border-[1px] rounded-sm focus:ring-2 appearance-none   focus:border-blue-400 focus:outline-none"
+            placeholder="비밀번호"
+          />
 
-        <input type="submit" value="Log-In" className="border-2 " />
-      </form>
-    </div>
+          <span className="text-red-600 text-center">
+            {errors?.username?.message}
+            {errors?.password?.message}
+          </span>
+
+          <input
+            type="submit"
+            value="로그인"
+            className="border-2 rounded-full w-80 h-9 bg-black text-white text-sm my-3 cursor-pointer"
+          />
+        </form>
+      </div>
+    </Layout>
   );
 };
 

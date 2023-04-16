@@ -1,11 +1,11 @@
 import { NextPage } from "next";
-import Link from "next/link";
 import { useRouter } from "next/router";
-import { cls } from "../lib/util";
 import { useForm } from "react-hook-form";
 import { User } from "@prisma/client";
-import useMutation from "../lib/useMutation";
+import useMutation from "@libs/useMutation";
 import { useEffect } from "react";
+import Layout from "@components/layout";
+import { useSWRConfig } from "swr";
 
 interface CreateAccountForm {
   username: string;
@@ -21,11 +21,19 @@ interface CreateAccountMutationsResult {
 
 const CreateAccount: NextPage = () => {
   const router = useRouter();
-  const [logout] = useMutation("/api/users/logout");
+  const { mutate } = useSWRConfig();
 
-  const { register, handleSubmit } = useForm<CreateAccountForm>();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setError,
+    formState: { errors },
+  } = useForm<CreateAccountForm>({
+    mode: "onChange",
+  });
 
-  const [create, { loading, data, error }] =
+  const [create, { loading, data }] =
     useMutation<CreateAccountMutationsResult>("/api/users/create");
 
   const onValid = ({ username, password, password2 }: CreateAccountForm) => {
@@ -37,78 +45,70 @@ const CreateAccount: NextPage = () => {
   useEffect(() => {
     if (!loading) {
       console.log(data);
+
       if (data?.ok) {
+        mutate("/api/users/me");
         router.push("/");
+      } else if (data?.error === "username exists") {
+        setError(
+          "username",
+          { type: "isExistUsername", message: "이미 존재하는 아이디입니다." },
+          { shouldFocus: true }
+        );
       }
     }
   }, [data]);
 
   return (
-    <div>
-      <h1>Create-Account</h1>
-      <div className="flex">
-        <div
-          className={cls(
-            router.pathname === "/log-in" ? "text-blue-500 font-bold" : ""
-          )}
+    <Layout title="계정 생성" hasLeftSideTabBar canGoBack>
+      <div className="w-full flex justify-center">
+        <form
+          onSubmit={handleSubmit(onValid)}
+          className="flex flex-col w-80 text-sm"
         >
-          <Link href="/log-in">Log-In</Link>
-        </div>
-        <div
-          className={cls(
-            router.pathname === "/create-account"
-              ? "text-blue-500 font-bold"
-              : ""
-          )}
-        >
-          <Link href="/create-account">Create-Account</Link>
-        </div>
-        <div
-          className={cls(
-            router.pathname === "/" ? "text-blue-500 font-bold" : ""
-          )}
-        >
-          <Link href="/">Home</Link>
-        </div>
-        <button
-          onClick={() => {
-            logout({});
-            console.log("Log-Out!");
-            router.push("/log-in");
-          }}
-          type="button"
-        >
-          Log-Out
-        </button>
+          <span className="text-red-600">{errors.username?.message}</span>
+
+          <input
+            {...register("username", { required: true })}
+            required
+            name="username"
+            type="text"
+            className="h-9 w-80 pl-1 my-2 border-[1px] rounded-sm focus:ring-2 appearance-none   focus:border-blue-400 focus:outline-none"
+            placeholder="아이디"
+          />
+          <input
+            {...register("password", { required: true })}
+            required
+            name="password"
+            type="password"
+            className="h-9 w-80 pl-1 my-2 border-[1px] rounded-sm focus:ring-2 appearance-none   focus:border-blue-400 focus:outline-none"
+            placeholder="비밀번호"
+          />
+
+          <span className="text-red-600">{errors.password2?.message}</span>
+          <input
+            {...register("password2", {
+              required: true,
+              validate: {
+                confirmPassword: (value) =>
+                  value === watch("password") ||
+                  "동일한 비밀번호를 입력해주세요.",
+              },
+            })}
+            required
+            name="password2"
+            type="password"
+            className="h-9 w-80 pl-1 my-2 border-[1px] rounded-sm focus:ring-2 appearance-none   focus:border-blue-400 focus:outline-none"
+            placeholder="비밀번호 확인"
+          />
+          <input
+            type="submit"
+            value="계정 생성"
+            className="border-2 rounded-full w-80 h-9 bg-black text-white text-sm my-3 cursor-pointer"
+          />
+        </form>
       </div>
-      <form onSubmit={handleSubmit(onValid)} className="flex flex-col w-60">
-        <input
-          {...register("username", { required: true })}
-          required
-          name="username"
-          type="text"
-          className="w-60 bg-slate-200"
-          placeholder="username"
-        />
-        <input
-          {...register("password", { required: true })}
-          required
-          name="password"
-          type="password"
-          className="w-60 bg-slate-200"
-          placeholder="password"
-        />
-        <input
-          {...register("password2", { required: true })}
-          required
-          name="password2"
-          type="password"
-          className="w-60 bg-slate-200"
-          placeholder="Confirm Password"
-        />
-        <input type="submit" value="계정 생성" className="border-2 " />
-      </form>
-    </div>
+    </Layout>
   );
 };
 
